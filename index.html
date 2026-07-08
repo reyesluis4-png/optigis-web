@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OptiGIS — Ingeniería de redes FTTH sobre QGIS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0F1E; --ink2:#0D1428; --panel:#111a33; --panel2:#0f1730;
+    --line:#22315b; --line2:#2c3d6e;
+    --cyan:#22D3EE; --violet:#8B5CF6; --coral:#FB7185; --teal:#14B8A6; --amber:#FACC15;
+    --tx:#E7EEFF; --muted:#93A4CC; --dim:#63739c;
+    --disp:'Space Grotesk',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace; --body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--ink);color:var(--tx);font-family:var(--body);line-height:1.55;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .mono{font-family:var(--mono)}
+  .grad{background:linear-gradient(100deg,var(--cyan),var(--violet) 55%,var(--coral));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  /* blueprint bg */
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:64px 64px;opacity:.06;
+    mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 75%)}
+  .glow{position:fixed;border-radius:50%;filter:blur(90px);z-index:0;pointer-events:none;opacity:.5}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:color-mix(in srgb,var(--ink) 78%,transparent);border-bottom:1px solid var(--line)}
+  .navin{display:flex;align-items:center;gap:24px;height:66px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:600;font-size:1.18rem;letter-spacing:.2px}
+  .nlinks{margin-left:auto;display:flex;gap:26px;align-items:center}
+  .nlinks a{font-size:.9rem;color:var(--muted);transition:color .15s}
+  .nlinks a:hover{color:var(--tx)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:.9rem;
+    padding:10px 17px;border-radius:9px;border:1px solid transparent;cursor:pointer;transition:.16s;font-family:var(--body)}
+  .btn.pri{background:linear-gradient(100deg,var(--cyan),var(--violet));color:#06101f}
+  .btn.pri:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn.ghost{border-color:var(--line2);color:var(--tx)}
+  .btn.ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+
+  section{position:relative;z-index:1}
+  .eyebrow{font-family:var(--mono);font-size:.76rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan)}
+
+  /* hero */
+  .hero{padding:74px 0 40px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+  .hero h1{font-family:var(--disp);font-weight:700;font-size:clamp(2.3rem,4.6vw,3.7rem);line-height:1.04;letter-spacing:-.02em;margin:16px 0 18px}
+  .hero p.lede{color:var(--muted);font-size:1.08rem;max-width:33ch;margin-bottom:26px}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap}
+  .herometa{display:flex;gap:22px;margin-top:30px;flex-wrap:wrap}
+  .herometa div{font-family:var(--mono);font-size:.8rem;color:var(--dim)}
+  .herometa b{display:block;font-size:1.35rem;color:var(--tx);font-family:var(--disp);font-weight:600}
+
+  /* topology card */
+  .topo{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:18px;padding:18px;box-shadow:0 30px 80px -40px #000}
+  .topo .cap{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .topo .cap span{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  @keyframes flow{to{stroke-dashoffset:-32}}
+  .fiber{stroke-dasharray:5 11;animation:flow 1.5s linear infinite}
+  @media(prefers-reduced-motion:reduce){.fiber{animation:none}}
+
+  /* section head */
+  .shead{max-width:60ch;margin-bottom:34px}
+  .shead h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.6rem,3vw,2.3rem);letter-spacing:-.01em;margin:12px 0 10px}
+  .shead p{color:var(--muted)}
+
+  .tools{padding:26px 0 10px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .tool{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;transition:.18s}
+  .tool:hover{border-color:var(--line2);transform:translateY(-3px);box-shadow:0 20px 50px -30px #000}
+  .tool .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;margin-bottom:12px;
+    border:1px solid var(--line2)}
+  .tool h3{font-family:var(--disp);font-size:1.02rem;font-weight:600;margin-bottom:5px}
+  .tool p{font-size:.86rem;color:var(--muted)}
+
+  /* demos */
+  .demos{padding:64px 0 10px}
+  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .vitem{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:.18s}
+  .vitem:hover{border-color:var(--line2);transform:translateY(-3px);box-shadow:0 24px 60px -34px #000}
+  .vframe{position:relative;aspect-ratio:16/9;background:#070c18;border-bottom:1px solid var(--line)}
+  .vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .vmeta{padding:16px 18px}
+  .vmeta .ep{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+  .vmeta h3{font-family:var(--disp);font-size:1.06rem;font-weight:600;margin:6px 0 4px}
+  .vmeta p{font-size:.86rem;color:var(--muted);margin-bottom:10px}
+  .vlink{font-family:var(--mono);font-size:.78rem;color:var(--muted);display:inline-flex;gap:7px;align-items:center;transition:color .15s}
+  .vlink:hover{color:var(--coral)}
+  .channel-cta{display:flex;justify-content:center;margin-top:30px}
+
+  /* open db */
+  .db{padding:64px 0}
+  .dbgrid{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+  .checklist{list-style:none;margin-top:18px;display:grid;gap:13px}
+  .checklist li{display:flex;gap:12px;align-items:flex-start;font-size:.96rem;color:var(--tx)}
+  .checklist li b{color:var(--tx)}
+  .checklist li span{color:var(--muted)}
+  .tick{flex:none;margin-top:3px;width:19px;height:19px;border-radius:6px;display:grid;place-items:center;
+    background:color-mix(in srgb,var(--teal) 20%,transparent);border:1px solid var(--teal)}
+  .term{background:#070c18;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-family:var(--mono);font-size:.82rem}
+  .term .bar{display:flex;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);align-items:center}
+  .term .bar i{width:11px;height:11px;border-radius:50%;display:block}
+  .term .bar span{margin-left:8px;color:var(--dim);font-size:.74rem}
+  .term .body{padding:16px 18px;line-height:1.85;color:#b7c6ee}
+  .term .k{color:var(--violet)} .term .t{color:var(--cyan)} .term .c{color:var(--dim)} .term .n{color:var(--coral)} .term .g{color:var(--teal)}
+
+  /* design→field */
+  .flow{padding:10px 0 72px}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .bigcard{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:26px}
+  .bigcard h3{font-family:var(--disp);font-size:1.2rem;margin-bottom:6px}
+  .bigcard p{color:var(--muted);font-size:.92rem;margin-bottom:14px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-family:var(--mono);font-size:.74rem;padding:6px 11px;border-radius:20px;border:1px solid var(--line2);color:var(--muted)}
+
+  footer{border-top:1px solid var(--line);padding:38px 0;position:relative;z-index:1}
+  .fin{display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between}
+  footer .muted{color:var(--dim);font-size:.84rem}
+
+  @media(max-width:900px){
+    .hero{grid-template-columns:1fr;gap:30px;padding-top:48px}
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .dbgrid,.twocol{grid-template-columns:1fr}
+    .vgrid{grid-template-columns:1fr}
+    .nlinks a:not(.btn){display:none}
+  }
+  @media(max-width:520px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="glow" style="width:520px;height:520px;background:var(--violet);right:-120px;top:-120px"></div>
+<div class="glow" style="width:460px;height:460px;background:var(--cyan);left:-160px;top:340px"></div>
+
+<nav><div class="wrap navin">
+  <a class="brand" href="#top">
+    <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
+      <g stroke-linecap="round">
+        <path d="M20 20 Q14 20 9 12" stroke="#22D3EE" stroke-width="2.4" fill="none"/>
+        <path d="M20 20 Q26 20 31 12" stroke="#8B5CF6" stroke-width="2.4" fill="none"/>
+        <path d="M20 20 Q14 20 9 28" stroke="#14B8A6" stroke-width="2.4" fill="none"/>
+        <path d="M20 20 Q26 20 31 28" stroke="#FB7185" stroke-width="2.4" fill="none"/>
+        <circle cx="9" cy="12" r="2.6" fill="#22D3EE"/><circle cx="31" cy="12" r="2.6" fill="#8B5CF6"/>
+        <circle cx="9" cy="28" r="2.6" fill="#14B8A6"/><circle cx="31" cy="28" r="2.6" fill="#FB7185"/>
+        <circle cx="20" cy="20" r="4.4" fill="#fff"/><circle cx="20" cy="20" r="2.4" fill="#4F46E5"/>
+      </g></svg>
+    OptiGIS
+  </a>
+  <div class="nlinks">
+    <a href="#tools">Herramientas</a>
+    <a href="#demos">Demos</a>
+    <a href="#db">Base abierta</a>
+    <a href="#flow">Diseño y reportería</a>
+    <a class="btn ghost" href="#">Documentación</a>
+  </div>
+</div></nav>
+
+<section class="hero wrap" id="top">
+  <div>
+    <span class="eyebrow">QGIS · FTTH / GPON · SpatiaLite</span>
+    <h1>La red de fibra, modelada con <span class="grad">precisión de ingeniería</span>.</h1>
+    <p class="lede">Un complemento profesional para QGIS que inventaría, conecta y documenta redes FTTH/GPON sobre una base de datos abierta.</p>
+    <div class="cta-row">
+      <a class="btn pri" href="#tools">Ver capacidades</a>
+      <a class="btn ghost" href="#db">Cómo guardamos tus datos</a>
+    </div>
+    <div class="herometa">
+      <div><b>80+</b>módulos</div>
+      <div><b>SRID 32719</b>UTM 19S</div>
+      <div><b>1 archivo</b>portable</div>
+    </div>
+  </div>
+
+  <div class="topo">
+    <div class="cap"><span class="mono">topología · PON 1:8 → NAP 1:8</span>
+      <span><i class="dot" style="background:var(--teal)"></i></span></div>
+    <svg viewBox="0 0 520 340" width="100%" role="img" aria-label="Árbol GPON: OLT a splitter primario, a NAP, a clientes">
+      <defs>
+        <linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+        <linearGradient id="fg2" x1="0" x2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#FB7185"/></linearGradient>
+      </defs>
+      <!-- OLT -->
+      <rect x="16" y="150" width="70" height="40" rx="8" fill="#0f1730" stroke="#2c3d6e"/>
+      <text x="51" y="175" font-family="IBM Plex Mono" font-size="12" fill="#93A4CC" text-anchor="middle">OLT</text>
+      <!-- feeder -->
+      <path class="fiber" d="M86 170 H170" stroke="url(#fg)" stroke-width="2.5" fill="none"/>
+      <!-- primary splitter -->
+      <circle cx="190" cy="170" r="15" fill="#0f1730" stroke="#22D3EE"/>
+      <text x="190" y="174" font-family="IBM Plex Mono" font-size="10" fill="#22D3EE" text-anchor="middle">1:8</text>
+      <!-- distribution to 4 NAPs (shown) -->
+      <g>
+        <path class="fiber" d="M205 170 C250 170 250 60 300 60" stroke="url(#fg2)" stroke-width="2" fill="none"/>
+        <path class="fiber" d="M205 170 C250 170 250 120 300 120" stroke="url(#fg2)" stroke-width="2" fill="none"/>
+        <path class="fiber" d="M205 170 C250 170 250 220 300 220" stroke="url(#fg2)" stroke-width="2" fill="none"/>
+        <path class="fiber" d="M205 170 C250 170 250 285 300 285" stroke="url(#fg2)" stroke-width="2" fill="none"/>
+      </g>
+      <!-- NAPs + secondary splitters + ONT dots -->
+      <g font-family="IBM Plex Mono" font-size="9" fill="#93A4CC" text-anchor="middle">
+        <g transform="translate(300,60)"><circle r="11" fill="#0f1730" stroke="#8B5CF6"/><text y="3">NAP</text></g>
+        <g transform="translate(300,120)"><circle r="11" fill="#0f1730" stroke="#8B5CF6"/><text y="3">NAP</text></g>
+        <g transform="translate(300,220)"><circle r="11" fill="#0f1730" stroke="#8B5CF6"/><text y="3">NAP</text></g>
+        <g transform="translate(300,285)"><circle r="11" fill="#0f1730" stroke="#8B5CF6"/><text y="3">NAP</text></g>
+      </g>
+      <g stroke="#FB7185" stroke-width="1.3" opacity=".8">
+        <g transform="translate(300,60)">
+          <line x1="11" y1="0" x2="60" y2="-18"/><line x1="11" y1="0" x2="60" y2="0"/><line x1="11" y1="0" x2="60" y2="18"/></g>
+        <g transform="translate(300,120)">
+          <line x1="11" y1="0" x2="60" y2="-18"/><line x1="11" y1="0" x2="60" y2="0"/><line x1="11" y1="0" x2="60" y2="18"/></g>
+        <g transform="translate(300,220)">
+          <line x1="11" y1="0" x2="60" y2="-18"/><line x1="11" y1="0" x2="60" y2="0"/><line x1="11" y1="0" x2="60" y2="18"/></g>
+        <g transform="translate(300,285)">
+          <line x1="11" y1="0" x2="60" y2="-14"/><line x1="11" y1="0" x2="60" y2="6"/></g>
+      </g>
+      <g fill="#FB7185">
+        <g transform="translate(360,60)"><circle cx="0" cy="-18" r="3"/><circle cx="0" cy="0" r="3"/><circle cx="0" cy="18" r="3"/></g>
+        <g transform="translate(360,120)"><circle cx="0" cy="-18" r="3"/><circle cx="0" cy="0" r="3"/><circle cx="0" cy="18" r="3"/></g>
+        <g transform="translate(360,220)"><circle cx="0" cy="-18" r="3"/><circle cx="0" cy="0" r="3"/><circle cx="0" cy="18" r="3"/></g>
+        <g transform="translate(360,285)"><circle cx="0" cy="-14" r="3"/><circle cx="0" cy="6" r="3"/></g>
+      </g>
+      <text x="430" y="315" font-family="IBM Plex Mono" font-size="10" fill="#63739c">1 PON → 64 clientes</text>
+    </svg>
+  </div>
+</section>
+
+<section class="tools wrap" id="tools">
+  <div class="shead">
+    <span class="eyebrow">Herramientas</span>
+    <h2>Todo el ciclo de la planta, en una sola herramienta</h2>
+    <p>Desde el poste en terreno hasta el puerto del OLT en la central: modelado topológico, conexiones y trazado punta a punta.</p>
+  </div>
+  <div class="grid">
+    <div class="tool"><div class="ic" style="color:var(--cyan)">▤</div><h3>Planta externa</h3><p>Postes, cámaras, mufas, canalización, NAP y clientes con edición topológica.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--violet)">▥</div><h3>Planta interna</h3><p>HUB, racks, ODF y OLT con plantillas de equipos y validación de U.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--coral)">⇄</div><h3>Conexión por rangos</h3><p>Terminación de ODF y fusiones en mufa/caja por rangos de hilos.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--teal)">⇲</div><h3>Propagación LOC</h3><p>Cuentas físicas trazadas del OLT al cliente sobre el árbol GPON.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--cyan)">◇</div><h3>Diagramas unilineares</h3><p>Esquemáticos interactivos con “Ir a” que encuadra el elemento en el mapa.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--amber)">∿</div><h3>Presupuesto óptico</h3><p>Power budget por enlace: valida el margen antes de salir a terreno.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--violet)">⇩</div><h3>Importación</h3><p>KML, DXF y Shapefile mapeados a los tipos del modelo.</p></div>
+    <div class="tool"><div class="ic" style="color:var(--teal)">▦</div><h3>Reportería y auditoría</h3><p>Ocupación de cables e hilos, consistencia y documentación técnica.</p></div>
+  </div>
+</section>
+
+<section class="demos wrap" id="demos">
+  <div class="shead">
+    <span class="eyebrow">Demos en video</span>
+    <h2>Míralo funcionando</h2>
+    <p>Demostraciones del producto sobre datos reales: modelado, conexiones, diagramas y reportería en QGIS.</p>
+  </div>
+  <div class="vgrid">
+    <article class="vitem">
+      <div class="vframe">
+        <iframe src="https://www.youtube-nocookie.com/embed/ITusU3Ek6GY" title="OptiGIS — Demo 01"
+          loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      <div class="vmeta">
+        <span class="ep">Demo 01</span>
+        <h3>[Título del video 1]</h3>
+        <p>[Breve descripción de lo que muestra la demo.]</p>
+        <a class="vlink" href="https://youtu.be/ITusU3Ek6GY" target="_blank" rel="noopener">▶ Ver en YouTube</a>
+      </div>
+    </article>
+    <article class="vitem">
+      <div class="vframe">
+        <iframe src="https://www.youtube-nocookie.com/embed/FZpzOcEr6Q0" title="OptiGIS — Demo 02"
+          loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      <div class="vmeta">
+        <span class="ep">Demo 02</span>
+        <h3>[Título del video 2]</h3>
+        <p>[Breve descripción de lo que muestra la demo.]</p>
+        <a class="vlink" href="https://youtu.be/FZpzOcEr6Q0" target="_blank" rel="noopener">▶ Ver en YouTube</a>
+      </div>
+    </article>
+  </div>
+  <div class="channel-cta">
+    <a class="btn ghost" href="[URL del canal de YouTube]" target="_blank" rel="noopener">Ver todas las demos en YouTube →</a>
+  </div>
+</section>
+
+<section class="db wrap" id="db">
+  <div class="dbgrid">
+    <div>
+      <span class="eyebrow">Base de datos abierta</span>
+      <h2 style="font-family:var(--disp);font-weight:600;font-size:clamp(1.6rem,3vw,2.3rem);margin:12px 0 8px">Tus datos, en un formato que no te encierra</h2>
+      <p style="color:var(--muted)">OptiGIS trabaja sobre <b>SpatiaLite</b> —SQLite espacial estándar— con un esquema documentado y migraciones versionadas. Sin formatos propietarios, sin dependencia de proveedor.</p>
+      <ul class="checklist">
+        <li><span class="tick" style="color:var(--teal)">✓</span><span><b>Estándar y portable.</b> Toda la red en un archivo <span class="mono">.sqlite</span> que abre QGIS y cualquier herramienta compatible con SQLite/OGR.</span></li>
+        <li><span class="tick" style="color:var(--teal)">✓</span><span><b>Esquema abierto y versionado.</b> Tablas, vistas y triggers documentados; migraciones controladas entre versiones.</span></li>
+        <li><span class="tick" style="color:var(--teal)">✓</span><span><b>Sin lock-in.</b> Exporta, respalda y consulta con SQL directo; tus datos te pertenecen.</span></li>
+        <li><span class="tick" style="color:var(--teal)">✓</span><span><b>Escalable.</b> Camino claro a PostgreSQL/PostGIS para operación multiusuario.</span></li>
+      </ul>
+    </div>
+    <div class="term" aria-hidden="true">
+      <div class="bar"><i style="background:#FB7185"></i><i style="background:#FACC15"></i><i style="background:#14B8A6"></i><span>red_ftth.sqlite · SpatiaLite · EPSG:32719</span></div>
+      <div class="body">
+<span class="c">-- inventario espacial, esquema abierto</span><br>
+<span class="k">SELECT</span> tipo, <span class="t">COUNT</span>(*) <span class="k">FROM</span> v_ocupacion_cable;<br><br>
+<span class="c">-- núcleo del modelo</span><br>
+&nbsp;<span class="g">red_hub</span> · <span class="g">red_olt</span> · <span class="g">hub_shelf</span> <span class="c">(ODF)</span><br>
+&nbsp;<span class="g">red_cable</span> · <span class="g">red_mufa</span> · <span class="g">red_caja_dist</span> <span class="c">(NAP)</span><br>
+&nbsp;<span class="g">red_splitter</span> · <span class="g">log_filamento</span> · <span class="g">log_fusion</span><br>
+&nbsp;<span class="g">log_linea</span> + <span class="g">log_linea_ruta</span> <span class="c">→ v_linea_recorrido</span><br><br>
+<span class="c">-- migraciones</span> <span class="n">schema_version = 0.22</span><br>
+<span class="k">PRAGMA</span> integrity_check; <span class="g">→ ok</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="flow wrap" id="flow">
+  <div class="shead">
+    <span class="eyebrow">Del diseño al terreno</span>
+    <h2>Diseña, valida y documenta antes de tender fibra</h2>
+  </div>
+  <div class="twocol">
+    <div class="bigcard">
+      <h3>Diseño de red</h3>
+      <p>Arma el árbol GPON con plantillas de ODF/OLT, define splitteo y valida el enlace con el presupuesto óptico. Detecta problemas en el escritorio, no en la calle.</p>
+      <div class="pills"><span class="pill">plantillas ODF/OLT</span><span class="pill">splitteo 1:N</span><span class="pill">power budget</span><span class="pill">factibilidad</span></div>
+    </div>
+    <div class="bigcard">
+      <h3>Reportería</h3>
+      <p>Convierte el inventario en documentación: ocupación de cables e hilos, HP construidos vs. conectados, auditorías de consistencia y diagramas exportables.</p>
+      <div class="pills"><span class="pill">ocupación</span><span class="pill">consistencia</span><span class="pill">Word / PDF</span><span class="pill">diagramas</span></div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap fin">
+  <div class="brand" style="font-size:1.05rem">
+    <svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round">
+      <path d="M20 20 Q14 20 9 12" stroke="#22D3EE" stroke-width="2.4" fill="none"/><path d="M20 20 Q26 20 31 12" stroke="#8B5CF6" stroke-width="2.4" fill="none"/>
+      <path d="M20 20 Q14 20 9 28" stroke="#14B8A6" stroke-width="2.4" fill="none"/><path d="M20 20 Q26 20 31 28" stroke="#FB7185" stroke-width="2.4" fill="none"/>
+      <circle cx="20" cy="20" r="4.4" fill="#fff"/><circle cx="20" cy="20" r="2.4" fill="#4F46E5"/></g></svg>
+    OptiGIS
+  </div>
+  <span class="muted">Inventario y modelamiento FTTH/GPON sobre QGIS · Nodo &amp; Fibra · Santiago, Chile</span>
+  <a class="btn pri" href="#">Solicitar acceso</a>
+</div></footer>
+</body>
+</html>
