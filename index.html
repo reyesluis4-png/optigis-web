@@ -97,6 +97,14 @@
   .vlink{font-family:var(--mono);font-size:.78rem;color:var(--muted);display:inline-flex;gap:7px;align-items:center;transition:color .15s}
   .vlink:hover{color:var(--coral)}
   .channel-cta{display:flex;justify-content:center;margin-top:30px}
+  /* galería de capturas */
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .shot{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:.18s;margin:0}
+  .shot:hover{border-color:var(--line2);transform:translateY(-3px);box-shadow:0 24px 60px -34px #000}
+  .shot img{width:100%;height:200px;object-fit:cover;object-position:top left;display:block;border-bottom:1px solid var(--line);background:#070c18}
+  .shot .cap{padding:14px 16px}
+  .shot .cap h3{font-family:var(--disp);font-size:1rem;font-weight:600;margin-bottom:4px}
+  .shot .cap p{font-size:.84rem;color:var(--muted)}
 
   /* open db */
   .db{padding:64px 0}
@@ -132,9 +140,10 @@
     .grid{grid-template-columns:repeat(2,1fr)}
     .dbgrid,.twocol{grid-template-columns:1fr}
     .vgrid{grid-template-columns:1fr}
+    .gallery{grid-template-columns:repeat(2,1fr)}
     .nlinks a:not(.btn){display:none}
   }
-  @media(max-width:520px){.grid{grid-template-columns:1fr}}
+  @media(max-width:520px){.grid{grid-template-columns:1fr}.gallery{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -157,7 +166,8 @@
   </a>
   <div class="nlinks">
     <a href="#tools">Herramientas</a>
-    <a href="#demos">Demos</a>
+    <a href="#capturas">Capturas</a>
+    <a href="demos.html">Demos</a>
     <a href="#db">Base abierta</a>
     <a href="#flow">Diseño y reportería</a>
     <a class="btn ghost" href="#">Documentación</a>
@@ -249,6 +259,36 @@
   </div>
 </section>
 
+<section class="tools wrap" id="capturas">
+  <div class="shead">
+    <span class="eyebrow">En acción</span>
+    <h2>OptiGIS por dentro</h2>
+    <p>Capturas reales del complemento trabajando sobre una red FTTH: estadísticas, terreno, OTDR, cabecera y conectividad.</p>
+  </div>
+  <div class="gallery">
+    <figure class="shot">
+      <a href="cap-estadisticas.jpg" target="_blank" rel="noopener"><img src="cap-estadisticas.jpg" loading="lazy" alt="Estadísticas de red — OptiGIS"></a>
+      <figcaption class="cap"><h3>Estadísticas de red</h3><p>Totales de cables, mufas, splitters, LOC física y zonas, en tiempo real.</p></figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="cap-web-campo.jpg" target="_blank" rel="noopener"><img src="cap-web-campo.jpg" loading="lazy" alt="Web de campo — OptiGIS"></a>
+      <figcaption class="cap"><h3>Web de campo</h3><p>Exporta un visor web autónomo para el equipo en terreno, sin instalar QGIS.</p></figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="cap-otdr.jpg" target="_blank" rel="noopener"><img src="cap-otdr.jpg" loading="lazy" alt="OTDR Virtual — OptiGIS"></a>
+      <figcaption class="cap"><h3>OTDR Virtual</h3><p>Localiza el punto de corte y estima la afectación: cables sin señal, NAPs y clientes.</p></figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="cap-cabecera.jpg" target="_blank" rel="noopener"><img src="cap-cabecera.jpg" loading="lazy" alt="Cabecera y conexiones — OptiGIS"></a>
+      <figcaption class="cap"><h3>Cabecera y conexiones</h3><p>OLT, cards, puertos PON, ODF y jumpers OLT↔ODF en una sola vista.</p></figcaption>
+    </figure>
+    <figure class="shot">
+      <a href="cap-diagrama.jpg" target="_blank" rel="noopener"><img src="cap-diagrama.jpg" loading="lazy" alt="Diagrama de conectividad — OptiGIS"></a>
+      <figcaption class="cap"><h3>Diagrama de conectividad</h3><p>Diagrama unilineal interactivo de la conectividad óptica de toda la red.</p></figcaption>
+    </figure>
+  </div>
+</section>
+
 <section class="demos wrap" id="demos">
   <div class="shead">
     <span class="eyebrow">Demos en video</span>
@@ -258,33 +298,34 @@
   <div class="vgrid">
     <article class="vitem">
       <div class="vframe">
-        <iframe src="https://www.youtube-nocookie.com/embed/ITusU3Ek6GY" title="OptiGIS — Demo 01"
+        <iframe src="https://www.youtube-nocookie.com/embed/ITusU3Ek6GY" title="OptiGIS — Presentación del plugin"
           loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       </div>
       <div class="vmeta">
-        <span class="ep">Demo 01</span>
-        <h3>[Título del video 1]</h3>
-        <p>[Breve descripción de lo que muestra la demo.]</p>
+        <span class="ep">Introducción</span>
+        <h3>Presentación del plugin</h3>
+        <p>Recorrido por la interfaz de OptiGIS y sus capacidades dentro de QGIS.</p>
         <a class="vlink" href="https://youtu.be/ITusU3Ek6GY" target="_blank" rel="noopener">▶ Ver en YouTube</a>
       </div>
     </article>
     <article class="vitem">
       <div class="vframe">
-        <iframe src="https://www.youtube-nocookie.com/embed/FZpzOcEr6Q0" title="OptiGIS — Demo 02"
+        <iframe src="https://www.youtube-nocookie.com/embed/FnOmqSq36e0" title="OptiGIS — Ingreso · NAPs y splitters"
           loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       </div>
       <div class="vmeta">
-        <span class="ep">Demo 02</span>
-        <h3>[Título del video 2]</h3>
-        <p>[Breve descripción de lo que muestra la demo.]</p>
-        <a class="vlink" href="https://youtu.be/FZpzOcEr6Q0" target="_blank" rel="noopener">▶ Ver en YouTube</a>
+        <span class="ep">Ingreso de red</span>
+        <h3>Ingreso · NAPs y splitters</h3>
+        <p>Alta de NAPs y splitters ópticos: capacidad, HP y ratio de división.</p>
+        <a class="vlink" href="https://youtu.be/FnOmqSq36e0" target="_blank" rel="noopener">▶ Ver en YouTube</a>
       </div>
     </article>
   </div>
-  <div class="channel-cta">
-    <a class="btn ghost" href="[URL del canal de YouTube]" target="_blank" rel="noopener">Ver todas las demos en YouTube →</a>
+  <div class="channel-cta" style="gap:12px;flex-wrap:wrap">
+    <a class="btn pri" href="demos.html">Ver todas las demos →</a>
+    <a class="btn ghost" href="https://www.youtube.com/@OptiGIS" target="_blank" rel="noopener">Canal de YouTube ↗</a>
   </div>
 </section>
 
